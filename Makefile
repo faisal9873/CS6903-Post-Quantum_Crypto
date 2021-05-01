@@ -7,6 +7,8 @@ INCLUDEDIR = includes
 LIBDIR = lib
 MCELIECEDIR = mceliece
 MCELIECEFILE = libmceliece.a
+FIPSDIR = fips
+NTRUDIR = ntru
 
 NTRU_SOURCES = ntru/crypto_sort.c ntru/fips202.c ntru/kem.c ntru/owcpa.c ntru/pack3.c ntru/packq.c ntru/poly.c ntru/sample.c ntru/verify.c ntru/rng.c 
 NTRU_HEADERS = ntru/api.h ntru/crypto_sort.h ntru/fips202.h ntru/kem.h ntru/poly.h ntru/owcpa.h ntru/params.h ntru/sample.h ntru/verify.h ntru/rng.h
@@ -20,10 +22,10 @@ ${OUTPUTDIR}:
 	@mkdir -p ${OUTPUTDIR}
 
 ntru_chat_Alice: ${OUTPUTDIR} $(NTRU_HEADERS) $(NTRU_SOURCES) $(APP_HEADERS) $(APP_SOURCES) chat_Alice.c server.c server.h api_ntru.c
-	$(CC) -o ${OUTPUTDIR}/$@ $(NTRU_SOURCES) $(APP_SOURCES) $(CFLAGS) chat_Alice.c server.c api_ntru.c ${LDFLAGS}
+	$(CC) -o ${OUTPUTDIR}/$@ $(NTRU_SOURCES) $(APP_SOURCES) -I${FIPSDIR}/${NTRUDIR} $(CFLAGS) chat_Alice.c server.c api_ntru.c ${LDFLAGS}
 
 ntru_chat_Bob: ${OUTPUTDIR} $(NTRU_HEADERS) $(NTRU_SOURCES) $(APP_HEADERS) $(APP_SOURCES) chat_Bob.c client.c client.h api_ntru.c
-	$(CC) -o ${OUTPUTDIR}/$@ $(NTRU_SOURCES) $(APP_SOURCES) $(CFLAGS) chat_Bob.c client.c api_ntru.c ${LDFLAGS}
+	$(CC) -o ${OUTPUTDIR}/$@ $(NTRU_SOURCES) $(APP_SOURCES) -I${FIPSDIR}/${NTRUDIR} $(CFLAGS) chat_Bob.c client.c api_ntru.c ${LDFLAGS}
 
 ${LIBDIR}/${MCELIECEDIR}/${MCELIECEFILE}:
 	@mkdir -p ${LIBDIR}/${MCELIECEDIR}
@@ -35,10 +37,10 @@ mceliece_deps:
 	@cp ${MCELIECEDIR}/*.h ${MCELIECEDIR}/**/*.h ${INCLUDEDIR}/${MCELIECEDIR}
 
 mceliece_chat_Alice: ${OUTPUTDIR} ${LIBDIR}/${MCELIECEDIR}/${MCELIECEFILE} mceliece_deps ${APP_HEADERS} ${APP_SOURCES} chat_Alice.c server.c server.h api_mceliece.c
-	$(CC) -o ${OUTPUTDIR}/$@ -I${INCLUDEDIR} -L${LIBDIR}/${MCELIECEDIR} ${CFLAGS} ${APP_SOURCES} chat_Alice.c server.c api_mceliece.c -lmceliece -lXKCP ${LDFLAGS}
+	$(CC) -o ${OUTPUTDIR}/$@ -I${INCLUDEDIR} -I${FIPSDIR}/${MCELIECEDIR} -L${LIBDIR}/${MCELIECEDIR} ${CFLAGS} ${APP_SOURCES} chat_Alice.c server.c api_mceliece.c -lmceliece -lXKCP ${LDFLAGS}
 
 mceliece_chat_Bob: ${OUTPUTDIR} ${LIBDIR}/${MCELIECEDIR}/${MCELIECEFILE} mceliece_deps ${APP_HEADERS} ${APP_SOURCES} chat_Bob.c client.c client.h api_mceliece.c
-	${CC} -o ${OUTPUTDIR}/$@ -I${INCLUDEDIR} -L${LIBDIR}/${MCELIECEDIR} ${CFLAGS} ${APP_SOURCES} chat_Bob.c client.c api_mceliece.c -lmceliece -lXKCP ${LDFLAGS}
+	${CC} -o ${OUTPUTDIR}/$@ -I${INCLUDEDIR} -I${FIPSDIR}/${MCELIECEDIR} -L${LIBDIR}/${MCELIECEDIR} ${CFLAGS} ${APP_SOURCES} chat_Bob.c client.c api_mceliece.c -lmceliece -lXKCP ${LDFLAGS}
 
 .PHONY: clean
 
