@@ -4,7 +4,7 @@ void print_smiley_face();
 void handler(int signal);
 char* encode(char* message);
 char* decode(char* message);
-char* find_token(char* msg, int len);
+int find_token(char* msg, int len, unsigned char* iv);
 
 void handler(int signal){
     exit(EXIT_SUCCESS); /* Simply call exit to close any file descriptors */
@@ -44,16 +44,30 @@ void print_smiley_face(){
     printf("%c%c%c%c ", encode1, encode2, encode3, encode4);
 }
 
-char* find_token(char* msg, int len){
+void combine_message(unsigned char* seq, unsigned char* iv, 
+                    unsigned char* cipher, unsigned char* tag, 
+                    unsigned char* message, unsigned char* cipher_len){
+    
+    memcpy(message, seq, SEQUENCE_BYTES);
+    memcpy(message+SEQUENCE_BYTES, iv, IV_BYTES);
+    memcpy(message+SEQUENCE_BYTES+IV_BYTES, cipher, *cipher_len);
+    message[SEQUENCE_BYTES + IV_BYTES + CIPHER_BYTES] = *cipher_len;
+    // memcpy(message+SEQUENCE_BYTES+IV_BYTES+CIPHER_BYTES, cipher_len, CIPHER_LENGTH_BYTES);
+    memcpy(message+SEQUENCE_BYTES+IV_BYTES+CIPHER_BYTES+CIPHER_LENGTH_BYTES, tag, TAG_BYTES);
 
-    for(int i = 0; i+1 < len; ++i){
-        if(strncmp(msg+i, "\\-", 2) == 0){
-            if(i)
-                msg[i-1] = '\0';
-            return msg+i+3;
-        }
-    }
-    return NULL;
+}
+
+void get_message_components(unsigned char* seq, unsigned char* iv, 
+                    unsigned char* cipher, unsigned char* tag, 
+                    unsigned char* message, unsigned char* cipher_len){
+    
+    memcpy(seq, message, SEQUENCE_BYTES);
+    memcpy(iv, message+SEQUENCE_BYTES, IV_BYTES);
+    memcpy(cipher, message+SEQUENCE_BYTES+IV_BYTES, CIPHER_BYTES);
+    *cipher_len = message[SEQUENCE_BYTES + IV_BYTES + CIPHER_BYTES];
+    // memcpy(cipher_len, message+SEQUENCE_BYTES+IV_BYTES+CIPHER_BYTES, CIPHER_LENGTH_BYTES);
+    memcpy(tag, message+SEQUENCE_BYTES+IV_BYTES+CIPHER_BYTES+CIPHER_LENGTH_BYTES, TAG_BYTES);
+
 }
 
 /*
@@ -69,16 +83,33 @@ and display to user on this end via stdout
 void chat(int clientfd, unsigned char* sshared_key){
     
     
-    int ready, fd, num_read;
+    int ready, fd, num_read, token_index;
     
     int nfds = max(STDOUT_FILENO, clientfd) + 1;
     fd_set readfds, writefds;
     char* name = "me";
     char* client_name = "friend";
-    unsigned char ciphertext[MESSAGE_LENGTH], plaintext[MESSAGE_LENGTH];
-    char message[MESSAGE_LENGTH];
-    int cipher_len, plaintext_len;
-    char *iv;
+    unsigned char ciphertext[CIPHER_BYTES], 
+                plaintext[MESSAGE_BYTES], 
+                seq[SEQUENCE_BYTES],
+                seq_decrypt[SEQUENCE_BYTES], 
+                seq_client[SEQUENCE_BYTES],
+                iv[IV_BYTES],
+                tag[TAG_BYTES],
+                tag_decrypt[TAG_BYTES],
+                seed[48];
+
+    unsigned char message[TOTAL_CIPHERTEXT_BYTES];
+    unsigned char cipher_len;
+    int plaintext_len;
+    randombytes_init(seed, NULL, 256);
+    randombytes(seq, SEQUENCE_BYTES);
+    // for(int i = 0; i < 4; ++i){
+    //     printf(""BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(seq[i]));
+    // }
+    // puts("");
+    printf("My Start Sequence: %ld\n", byte_to_bit(seq));
+    int received_count = 0;
 
     while(1){
         
@@ -119,7 +150,7 @@ void chat(int clientfd, unsigned char* sshared_key){
                         Only set read events so we must read
                     */
 
-                    num_read = read(fd, message, MESSAGE_LENGTH);
+                    num_read = read(fd, message, TOTAL_CIPHERTEXT_BYTES);
 
                     if(num_read == -1){
 
@@ -141,13 +172,31 @@ void chat(int clientfd, unsigned char* sshared_key){
                             Encrypt message from user
                             and send to client
                         */
-                        iv = find_token(message, num_read);
-                        if(iv == NULL){
-                            iv = "96458ehf8qbx7";
-                        }
-                        cipher_len = sym_encrypt( (unsigned char*) message, num_read, sshared_key, (unsigned char*) iv, ciphertext);
-                        write(clientfd, ciphertext, cipher_len);
-                        print_hex(stdout, "Encrypted message: ", ciphertext, cipher_len);
+
+                        randombytes(iv, IV_BYTES);
+
+                        cipher_len = sym_encrypt( message, num_read , sshared_key, iv, ciphertext);
+
+                        memcpy(message, seq, SEQUENCE_BYTES);
+                        memcpy(message+SEQUENCE_BYTES, sshared_key, CRYPTO_BYTES);
+                        memcpy(message+SEQUENCE_BYTES+CRYPTO_BYTES, ciphertext, cipher_len);
+
+                        sha3_256(tag, message, SEQUENCE_BYTES+CRYPTO_BYTES + cipher_len);
+                        combine_message(seq, iv, ciphertext, tag, message, &cipher_len);
+                        write(clientfd, message, TOTAL_CIPHERTEXT_BYTES);
+
+                        printf("Seq: %ld\n", byte_to_bit(seq));
+                        // for(int i = 0; i < 4; ++i){
+                        //     printf(""BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(seq[i]));
+                        // }
+                        // puts("");
+                        print_hex(stdout, "IV: ", iv, IV_BYTES);
+                        // print_hex(stdout, "Encrypted message: ", ciphertext, cipher_len);
+                        print_hex(stdout, "Tag: ", tag, TAG_BYTES);
+                        printf("Ciphertext length: %d\n", cipher_len);
+
+                        cyclic_incr_byte_arr(seq);
+
                     }
                     else {
                         
@@ -166,22 +215,66 @@ void chat(int clientfd, unsigned char* sshared_key){
                             /*
                                 Decode and display message from server
                             */
-                            iv = find_token(message, num_read);
-                            if(iv == NULL){
-                                iv = "96458ehf8qbx7";
+                            if(num_read != TOTAL_CIPHERTEXT_BYTES){
+                                printf("Received: %d bytes. Expected: %d bytes\n", num_read, TOTAL_CIPHERTEXT_BYTES);
                             }
 
-                            plaintext_len = sym_decrypt((unsigned char*) message, num_read, sshared_key, (unsigned char*) iv, plaintext);
+                            get_message_components(seq_decrypt, iv, ciphertext, tag, message, &cipher_len);
+                            
+
+                            /*
+                                Check sequence number for replay attack
+                            */
+                            if(received_count == 0){
+                                memcpy(seq_client, seq_decrypt, SEQUENCE_BYTES);
+                                printf("Start receiving sequence: %ld\n", byte_to_bit(seq_client));
+                            }
+                            else{
+                                if(!compare_byte_arr(seq_client, seq_decrypt, SEQUENCE_BYTES)){
+                                    printf("Sequence number not expected. Expected: %ld\n", byte_to_bit(seq_decrypt));
+                                }
+                            }
+                            puts("");
+
+                            printf("Seq: %ld\n", byte_to_bit(seq_decrypt));
+                            print_hex(stdout, "IV: ", iv, IV_BYTES);
+                            print_hex(stdout, "Encrypted message: ", ciphertext, cipher_len);
+                            print_hex(stdout, "Tag: ", tag, TAG_BYTES);
+                            printf("Ciphertext length: %d\n", cipher_len);
+
+                            /*
+                            Verify Tag
+                            */
+
+                            memcpy(message, seq_decrypt, SEQUENCE_BYTES);
+                            memcpy(message+SEQUENCE_BYTES, sshared_key, CRYPTO_BYTES);
+                            memcpy(message+SEQUENCE_BYTES+CRYPTO_BYTES, ciphertext, cipher_len);
+                            sha3_256(tag_decrypt, message, SEQUENCE_BYTES+CRYPTO_BYTES + cipher_len);
+
+                            if(!compare_byte_arr(tag, tag_decrypt, TAG_BYTES)){
+                                printf("Verify failed.\n");
+                                // print_hex(stdout, "Computed Tag: ", tag_decrypt, TAG_BYTES);
+                                // print_hex(stdout, "Expected Tag: ", tag, TAG_BYTES);
+                            }
+
+                            /*
+                                Decrypt
+                            */
+
+                            plaintext_len = sym_decrypt( ciphertext, cipher_len, sshared_key, iv, plaintext);
                             plaintext[plaintext_len] = '\0';
                             printf("%s ", client_name);
                             print_smiley_face();
                             printf(" %s", (char*) plaintext);
                             
-
+                            received_count++;
+                            cyclic_incr_byte_arr(seq_client);
                         }
                         
 
                     }
+
+                    puts("");
                     
 
                 }

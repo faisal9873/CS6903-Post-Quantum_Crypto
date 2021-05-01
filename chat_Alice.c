@@ -35,6 +35,8 @@ For each message, user sends with the form:
 random is used to initialize symmetric encryption 
 of that message
 
+ciphertext = (seq+1, IV, c=Enc(IV, key, m), Tag(seq+1, key, c)) = 32 + 16 + 256 + 32 bytes
+
 */
 
 

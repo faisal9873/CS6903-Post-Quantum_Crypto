@@ -10,7 +10,12 @@
 
 #define CRYPTO_ALGNAME "NTRU-HPS4096821"
 
-/* ntru-hps4096821 */
+/* 
+
+ntru-hps4096821 
+https://ntru.org/resources.shtml
+
+*/
 
 int crypto_kem_keypair(unsigned char *pk, unsigned char *sk);
 
