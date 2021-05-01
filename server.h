@@ -12,7 +12,7 @@
 #include <signal.h> /* sigaction, SIGINT, SIGQUIT */
 #include <errno.h>
 #include "chat.h"
-#include "ntru/api.h"
+#include "api.h"
 #include "print_hex.h"
 
 

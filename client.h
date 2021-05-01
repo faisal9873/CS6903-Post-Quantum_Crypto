@@ -14,7 +14,7 @@
 #include <signal.h> /* sigaction, SIGINT, SIGQUIT */
 #include <errno.h>
 #include "chat.h"
-#include "ntru/api.h"
+#include "api.h"
 
 #ifndef NI_MAXHOST
 #define NI_MAXHOST 1025
