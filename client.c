@@ -154,10 +154,25 @@ void key_exchange(int serverfd, unsigned char* sshared_key, unsigned char* ciphe
         exit(EXIT_FAILURE);
     }
     
+    FILE* measure_fd = fopen("./log/measure_stats", "a");
+    if(measure_fd == NULL){
+        printf("Failed to open file ./log/measure_stats for writing\n");
+    }
+
+    struct timeval tv_start, tv_end;
+    gettimeofday(&tv_start,NULL);
+
     if ( (ret_val = crypto_kem_dec(sshared_key, cipher, aprivate_key)) != 0) {
         printf("crypto_kem_dec returned <%d>\n", ret_val); 
         exit(EXIT_FAILURE);
     }
+    gettimeofday(&tv_end,NULL);
+    fprintf(measure_fd, "Decryption takes %f seconds\n\n", tv_to_seconds(&tv_end) - tv_to_seconds(&tv_start) );
+
+    if( fclose(measure_fd) == -1){
+        fprintf(stderr, "Error closing measure_fd\n");
+    }
+
     print_hex(stdout, "Symmetric Key: ", sshared_key, crypto_bytes);
 
     puts("");

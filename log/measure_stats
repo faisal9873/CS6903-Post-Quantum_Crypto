@@ -1,0 +1,40 @@
+KEM: NTRU
+
+Public Key Byte Size: 1230
+
+Private Key Byte Size: 1590
+
+Message Byte Size: 328
+
+Pseudo random Byte Size: 32
+
+Ciphertext Byte Size: 1230
+
+Symmetric Key Byte Size: 32
+
+Generate key pair takes 0.084160 seconds
+
+Encryption takes 0.001716 seconds
+
+Decryption takes 0.004374 seconds
+
+KEM: MCELIECE
+
+Public Key Byte Size: 1044992
+
+Private Key Byte Size: 13932
+
+Message Byte Size: 836
+
+Pseudo random Byte Size: 0
+
+Ciphertext Byte Size: 240
+
+Symmetric Key Byte Size: 32
+
+Generate key pair takes 1.322115 seconds
+
+Encryption takes 0.000549 seconds
+
+Decryption takes 0.081921 seconds
+

@@ -13,8 +13,8 @@ NTRUDIR = ntru
 NTRU_SOURCES = ntru/crypto_sort.c ntru/fips202.c ntru/kem.c ntru/owcpa.c ntru/pack3.c ntru/packq.c ntru/poly.c ntru/sample.c ntru/verify.c ntru/rng.c 
 NTRU_HEADERS = ntru/api.h ntru/crypto_sort.h ntru/fips202.h ntru/kem.h ntru/poly.h ntru/owcpa.h ntru/params.h ntru/sample.h ntru/verify.h ntru/rng.h
 
-APP_SOURCES = chat.c symmetric.c print_hex.c
-APP_HEADERS = chat.h symmetric.h print_hex.h rng.h api.h
+APP_SOURCES = chat.c symmetric.c print_hex.c time_helper.c
+APP_HEADERS = chat.h symmetric.h print_hex.h rng.h api.h time_helper.h
 
 all: ntru_chat_Alice ntru_chat_Bob mceliece_chat_Alice mceliece_chat_Bob
 

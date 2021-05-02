@@ -15,6 +15,7 @@
 #include <errno.h>
 #include "chat.h"
 #include "api.h"
+#include "time_helper.h"
 
 #ifndef NI_MAXHOST
 #define NI_MAXHOST 1025

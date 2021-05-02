@@ -14,6 +14,7 @@
 #include "chat.h"
 #include "api.h"
 #include "print_hex.h"
+#include "time_helper.h"
 
 
 #ifndef NI_MAXHOST
