@@ -9,6 +9,7 @@ MCELIECEDIR = mceliece
 MCELIECEFILE = libmceliece.a
 FIPSDIR = fips
 NTRUDIR = ntru
+LOGDIR = log
 
 NTRU_SOURCES = ntru/crypto_sort.c ntru/fips202.c ntru/kem.c ntru/owcpa.c ntru/pack3.c ntru/packq.c ntru/poly.c ntru/sample.c ntru/verify.c ntru/rng.c 
 NTRU_HEADERS = ntru/api.h ntru/crypto_sort.h ntru/fips202.h ntru/kem.h ntru/poly.h ntru/owcpa.h ntru/params.h ntru/sample.h ntru/verify.h ntru/rng.h
@@ -20,6 +21,7 @@ all: ntru_chat_Alice ntru_chat_Bob mceliece_chat_Alice mceliece_chat_Bob
 
 ${OUTPUTDIR}:
 	@mkdir -p ${OUTPUTDIR}
+	@mkdir -p ${LOGDIR}
 
 ntru_chat_Alice: ${OUTPUTDIR} $(NTRU_HEADERS) $(NTRU_SOURCES) $(APP_HEADERS) $(APP_SOURCES) chat_Alice.c server.c server.h api_ntru.c
 	$(CC) -o ${OUTPUTDIR}/$@ $(NTRU_SOURCES) $(APP_SOURCES) -I${FIPSDIR}/${NTRUDIR} $(CFLAGS) chat_Alice.c server.c api_ntru.c ${LDFLAGS}
