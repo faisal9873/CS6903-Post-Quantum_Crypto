@@ -178,10 +178,10 @@ void chat(int clientfd, unsigned char* sshared_key){
                         cipher_len = sym_encrypt( message, num_read , sshared_key, iv, ciphertext);
 
                         memcpy(message, seq, SEQUENCE_BYTES);
-                        memcpy(message+SEQUENCE_BYTES, sshared_key, CRYPTO_BYTES);
-                        memcpy(message+SEQUENCE_BYTES+CRYPTO_BYTES, ciphertext, cipher_len);
+                        memcpy(message+SEQUENCE_BYTES, sshared_key, crypto_bytes);
+                        memcpy(message+SEQUENCE_BYTES+crypto_bytes, ciphertext, cipher_len);
 
-                        sha3_256(tag, message, SEQUENCE_BYTES+CRYPTO_BYTES + cipher_len);
+                        sha3_256(tag, message, SEQUENCE_BYTES+crypto_bytes + cipher_len);
                         combine_message(seq, iv, ciphertext, tag, message, &cipher_len);
                         write(clientfd, message, TOTAL_CIPHERTEXT_BYTES);
 
@@ -247,9 +247,9 @@ void chat(int clientfd, unsigned char* sshared_key){
                             */
 
                             memcpy(message, seq_decrypt, SEQUENCE_BYTES);
-                            memcpy(message+SEQUENCE_BYTES, sshared_key, CRYPTO_BYTES);
-                            memcpy(message+SEQUENCE_BYTES+CRYPTO_BYTES, ciphertext, cipher_len);
-                            sha3_256(tag_decrypt, message, SEQUENCE_BYTES+CRYPTO_BYTES + cipher_len);
+                            memcpy(message+SEQUENCE_BYTES, sshared_key, crypto_bytes);
+                            memcpy(message+SEQUENCE_BYTES+crypto_bytes, ciphertext, cipher_len);
+                            sha3_256(tag_decrypt, message, SEQUENCE_BYTES+crypto_bytes + cipher_len);
 
                             if(!compare_byte_arr(tag, tag_decrypt, TAG_BYTES)){
                                 printf("Verify failed.\n");

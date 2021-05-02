@@ -9,9 +9,9 @@
 #include <errno.h>
 #include "symmetric.h"
 #include "print_hex.h"
-#include "ntru/rng.h"
-#include "ntru/api.h"
-#include "ntru/fips202.h"
+#include "rng.h"
+#include "api.h"
+#include "fips202.h"
 
 #define max(a,b) (a > b ? a : b)
 

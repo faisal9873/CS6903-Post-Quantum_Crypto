@@ -1,0 +1,7 @@
+*.swp
+bin/
+lib/
+log/
+includes/
+*_out
+**/*.o

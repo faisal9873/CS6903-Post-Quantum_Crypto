@@ -1,6 +1,8 @@
 #include "client.h"
 #include "print_hex.h"
 
+#define BYTE_CHUNK 1024
+
 void establish_connection(unsigned char* sshared_key, unsigned char* cipher, unsigned char* aprivate_key, unsigned char* apublic_key){
 
     setbuf(stdout, NULL); // Set buf to null so we don't need to flush
@@ -102,18 +104,45 @@ void key_exchange(int serverfd, unsigned char* sshared_key, unsigned char* ciphe
 
     int ret_val;
     /* Send public key to Alice */
-    if(write(serverfd, apublic_key, CRYPTO_PUBLICKEYBYTES) == -1){
-        perror("Error sending public key to Alice\n");
-        if(close(serverfd) == -1){
-            perror("close serverfd"); /* server closed connection */
+    /* send this in chunks of 1KB */
+    size_t write_result;
+    size_t bytes_remaining = crypto_publickeybytes;
+    while(bytes_remaining > BYTE_CHUNK){
+        if((write_result = write(serverfd, apublic_key+crypto_publickeybytes-bytes_remaining, BYTE_CHUNK)) == -1){
+            perror("Error sending public key to Alice\n");
+            if(close(serverfd) == -1){
+                perror("close serverfd");
+                exit(EXIT_FAILURE);
+            }
             exit(EXIT_FAILURE);
-        } 
-        exit(EXIT_FAILURE);
+        }
+
+        bytes_remaining -= write_result;
+    }
+    if(bytes_remaining > 0){
+        if((write_result = write(serverfd, apublic_key+crypto_publickeybytes-bytes_remaining, bytes_remaining)) == -1){
+            perror("Error sending public key to Alice\n");
+            if(close(serverfd) == -1){
+                perror("close serverfd");
+                exit(EXIT_FAILURE);
+            }
+            exit(EXIT_FAILURE);
+        }
     }
 
+/*    if((write_result = write(serverfd, apublic_key, crypto_publickeybytes)) == -1){
+        perror("Error sending public key to Alice\n");
+        if(close(serverfd) == -1){
+        perror("close serverfd");
+            exit(EXIT_FAILURE);
+        }
+        exit(EXIT_FAILURE);
+    }
+    printf("Bytes written: %zu\n", write_result);
+*/
     /* Wait until receive the encrypted share key from Alice */
 
-    if(read(serverfd, cipher, CRYPTO_CIPHERTEXTBYTES) == -1){
+    if(read(serverfd, cipher, crypto_ciphertextbytes) == -1){
         perror("Error getting key from Alice\n");
         if(close(serverfd) == -1){
             perror("close serverfd"); /* server closed connection */
@@ -122,11 +151,26 @@ void key_exchange(int serverfd, unsigned char* sshared_key, unsigned char* ciphe
         exit(EXIT_FAILURE);
     }
     
+    FILE* measure_fd = fopen("./log/measure_stats", "a");
+    if(measure_fd == NULL){
+        printf("Failed to open file ./log/measure_stats for writing\n");
+    }
+
+    struct timeval tv_start, tv_end;
+    gettimeofday(&tv_start,NULL);
+
     if ( (ret_val = crypto_kem_dec(sshared_key, cipher, aprivate_key)) != 0) {
         printf("crypto_kem_dec returned <%d>\n", ret_val); 
         exit(EXIT_FAILURE);
     }
-    print_hex(stdout, "Symmetric Key: ", sshared_key, CRYPTO_BYTES);
+    gettimeofday(&tv_end,NULL);
+    fprintf(measure_fd, "Decryption takes %f seconds\n\n", tv_to_seconds(&tv_end) - tv_to_seconds(&tv_start) );
+
+    if( fclose(measure_fd) == -1){
+        fprintf(stderr, "Error closing measure_fd\n");
+    }
+
+    print_hex(stdout, "Symmetric Key: ", sshared_key, crypto_bytes);
 
     puts("");
     printf("Key exchange is finished, you can now chat with Alice\n");

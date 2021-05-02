@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "ntru/rng.h"
-#include "ntru/api.h"
+#include "rng.h"
+#include "api.h"
 #include "client.h"
 #include "print_hex.h"
 
@@ -34,19 +34,19 @@ a hash function.
 int main(){
     char                fn_req[32], fn_rsp[32];
     unsigned char       seed[48];
-    unsigned char       cipher[CRYPTO_CIPHERTEXTBYTES], sshared_key[CRYPTO_BYTES];
-    unsigned char       apublic_key[CRYPTO_PUBLICKEYBYTES], aprivate_key[CRYPTO_SECRETKEYBYTES];
+    unsigned char       cipher[crypto_ciphertextbytes], sshared_key[crypto_bytes];
+    unsigned char       apublic_key[crypto_publickeybytes], aprivate_key[crypto_secretkeybytes];
     int                 ret_val;
 
     randombytes_init(seed, NULL, 256);
-
+    printf("%llu %llu %llu %llu", crypto_publickeybytes, crypto_secretkeybytes, crypto_ciphertextbytes, crypto_bytes);
     if ( (ret_val = crypto_kem_keypair(apublic_key, aprivate_key)) != 0) {
         printf("crypto_kem_keypair returned <%d>\n", ret_val);
         exit(EXIT_FAILURE);
     }
-    print_hex(stdout, "Public Key: ", apublic_key, CRYPTO_PUBLICKEYBYTES);
+    print_hex(stdout, "Public Key: ", apublic_key, crypto_publickeybytes);
     puts("");
-    print_hex(stdout, "Private Key: ", aprivate_key, CRYPTO_SECRETKEYBYTES);
+    print_hex(stdout, "Private Key: ", aprivate_key, crypto_secretkeybytes);
     puts("");
 
     establish_connection(sshared_key, cipher, aprivate_key, apublic_key);

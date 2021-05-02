@@ -130,32 +130,60 @@ void key_exchange(int clientfd, unsigned char* cipher, unsigned char* sshared_ke
     puts("");
 
     int ret_val;
-    unsigned char client_public_key[CRYPTO_PUBLICKEYBYTES];
+    unsigned char client_public_key[crypto_publickeybytes];
+    size_t read_result;
+    size_t bytes_remaining = crypto_publickeybytes;
+    while(bytes_remaining > 0){
+        if((read_result = read(clientfd, client_public_key+crypto_publickeybytes-bytes_remaining, bytes_remaining)) == -1){
+            perror("Error getting key from Bob\n");
+            if(close(clientfd) == -1){
+                perror("close clientfd"); /* server closed connection */
+                exit(EXIT_FAILURE);
+            } 
+            exit(EXIT_FAILURE);
+        }
 
-    if(read(clientfd, client_public_key, CRYPTO_PUBLICKEYBYTES) == -1){
+        bytes_remaining -= read_result;
+    }
+/*    if((read_result = read(clientfd, client_public_key, crypto_publickeybytes)) == -1){
         perror("Error getting key from Bob\n");
         if(close(clientfd) == -1){
-            perror("close clientfd"); /* server closed connection */
+            perror("close clientfd"); 
             exit(EXIT_FAILURE);
         } 
         exit(EXIT_FAILURE);
     }
-
-    print_hex(stdout, "Bob's public Key: ", client_public_key, CRYPTO_PUBLICKEYBYTES);
+    printf("Bytes read: %zu\n", read_result);
+*/
+    print_hex(stdout, "Bob's public Key: ", client_public_key, crypto_publickeybytes);
     puts("");
     
+    FILE* measure_fd = fopen("./log/measure_stats", "a");
+    if(measure_fd == NULL){
+        printf("Failed to open file ./log/measure_stats for writing\n");
+    }
+    
+    struct timeval tv_start, tv_end;
+    gettimeofday(&tv_start,NULL);
 
     if ( (ret_val = crypto_kem_enc(cipher, sshared_key, client_public_key)) != 0) { /* ciphertext, hash, pk, only share ciphertext */
         printf("crypto_kem_enc returned <%d>\n", ret_val); /* ss is the shared key */
         exit(EXIT_FAILURE);
     }
-    print_hex(stdout, "Cipher: ", cipher, CRYPTO_CIPHERTEXTBYTES);
+    gettimeofday(&tv_end,NULL);
+    fprintf(measure_fd, "Encryption takes %f seconds\n\n", tv_to_seconds(&tv_end) - tv_to_seconds(&tv_start) );
+
+    if( fclose(measure_fd) == -1){
+        fprintf(stderr, "Error closing measure_fd\n");
+    }
+
+    print_hex(stdout, "Cipher: ", cipher, crypto_ciphertextbytes);
     puts("");
-    print_hex(stdout, "Symmetric Key: ", sshared_key, CRYPTO_BYTES);
+    print_hex(stdout, "Symmetric Key: ", sshared_key, crypto_bytes);
 
     /* Send encrypted symmetric key to client */
 
-    if(write(clientfd, cipher, CRYPTO_CIPHERTEXTBYTES) == -1){
+    if(write(clientfd, cipher, crypto_ciphertextbytes) == -1){
         perror("Error sending encrypted symmetric key to Bob\n");
         if(close(clientfd) == -1){
             perror("close clientfd"); /* server closed connection */
