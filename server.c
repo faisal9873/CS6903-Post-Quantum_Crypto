@@ -142,7 +142,7 @@ void key_exchange(int clientfd, unsigned char* cipher, unsigned char* sshared_ke
             } 
             exit(EXIT_FAILURE);
         }
-        printf("Bytes read: %zu\n", read_result);
+
         bytes_remaining -= read_result;
     }
 /*    if((read_result = read(clientfd, client_public_key, crypto_publickeybytes)) == -1){

@@ -108,7 +108,6 @@ void key_exchange(int serverfd, unsigned char* sshared_key, unsigned char* ciphe
     size_t write_result;
     size_t bytes_remaining = crypto_publickeybytes;
     while(bytes_remaining > BYTE_CHUNK){
-        print_hex(stdout, "Chunk: ", apublic_key+crypto_publickeybytes-bytes_remaining, BYTE_CHUNK);
         if((write_result = write(serverfd, apublic_key+crypto_publickeybytes-bytes_remaining, BYTE_CHUNK)) == -1){
             perror("Error sending public key to Alice\n");
             if(close(serverfd) == -1){
@@ -117,11 +116,10 @@ void key_exchange(int serverfd, unsigned char* sshared_key, unsigned char* ciphe
             }
             exit(EXIT_FAILURE);
         }
-        printf("Bytes written: %zu\n", write_result);
+
         bytes_remaining -= write_result;
     }
     if(bytes_remaining > 0){
-        print_hex(stdout, "Chunk: ", apublic_key+crypto_publickeybytes-bytes_remaining, bytes_remaining);
         if((write_result = write(serverfd, apublic_key+crypto_publickeybytes-bytes_remaining, bytes_remaining)) == -1){
             perror("Error sending public key to Alice\n");
             if(close(serverfd) == -1){
@@ -130,7 +128,6 @@ void key_exchange(int serverfd, unsigned char* sshared_key, unsigned char* ciphe
             }
             exit(EXIT_FAILURE);
         }
-        printf("Bytes written: %zu\n", write_result);
     }
 
 /*    if((write_result = write(serverfd, apublic_key, crypto_publickeybytes)) == -1){
