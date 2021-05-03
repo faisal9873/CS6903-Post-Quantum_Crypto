@@ -7,6 +7,7 @@
 #include <stdlib.h> /* EXIT_SUCCESS, EXIT_FAILURE */
 #include <signal.h>
 #include <errno.h>
+#include <time.h>
 #include "symmetric.h"
 #include "print_hex.h"
 #include "rng.h"

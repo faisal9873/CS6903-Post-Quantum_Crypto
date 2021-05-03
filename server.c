@@ -158,6 +158,7 @@ void key_exchange(int clientfd, unsigned char* cipher, unsigned char* sshared_ke
     print_hex(stdout, "Bob's public Key: ", client_public_key, crypto_publickeybytes);
     puts("");
     
+    #ifdef OPEN_LOG
     FILE* measure_fd = fopen("./log/measure_stats", "a");
     if(measure_fd == NULL){
         printf("Failed to open file ./log/measure_stats for writing\n");
@@ -165,17 +166,22 @@ void key_exchange(int clientfd, unsigned char* cipher, unsigned char* sshared_ke
     
     struct timeval tv_start, tv_end;
     gettimeofday(&tv_start,NULL);
+    #endif
 
     if ( (ret_val = crypto_kem_enc(cipher, sshared_key, client_public_key)) != 0) { /* ciphertext, hash, pk, only share ciphertext */
         printf("crypto_kem_enc returned <%d>\n", ret_val); /* ss is the shared key */
         exit(EXIT_FAILURE);
     }
+
+    #ifdef OPEN_LOG
     gettimeofday(&tv_end,NULL);
     fprintf(measure_fd, "Encryption takes %f seconds\n\n", tv_to_seconds(&tv_end) - tv_to_seconds(&tv_start) );
+    
 
     if( fclose(measure_fd) == -1){
         fprintf(stderr, "Error closing measure_fd\n");
     }
+    #endif
 
     print_hex(stdout, "Cipher: ", cipher, crypto_ciphertextbytes);
     puts("");

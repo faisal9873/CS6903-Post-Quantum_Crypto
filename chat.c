@@ -103,7 +103,13 @@ void chat(int clientfd, unsigned char* sshared_key){
     unsigned char cipher_len;
     int plaintext_len;
     randombytes_init(seed, NULL, 256);
-    randombytes(seq, SEQUENCE_BYTES);
+    time_t t;
+    srand((unsigned) time(&t));
+    int rounds = rand() % 50;
+    for(int i = 0; i < rounds; ++i){
+        randombytes(seq, SEQUENCE_BYTES);
+    }
+    
     // for(int i = 0; i < 4; ++i){
     //     printf(""BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(seq[i]));
     // }

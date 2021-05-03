@@ -5,6 +5,7 @@ extern unsigned long long crypto_bytes;
 extern unsigned long long crypto_message_bytes;
 extern unsigned long long crypto_pseudorandom_secret_bytes;
 extern char* PROG_NAME;
+// #define OPEN_LOG
 
 int crypto_kem_keypair(unsigned char *pk, unsigned char *sk);
 

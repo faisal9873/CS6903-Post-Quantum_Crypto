@@ -53,6 +53,7 @@ int main(){
 
     randombytes_init(seed, NULL, 256);
     
+    #ifdef OPEN_LOG
     FILE* measure_fd = fopen("./log/measure_stats", "a");
     if(measure_fd == NULL){
         printf("Failed to open file measure_stats for writing\n");
@@ -78,6 +79,7 @@ int main(){
     if( fclose(measure_fd) == -1){
         fprintf(stderr, "Error closing measure_fd\n");
     }
+    #endif
     
     
     print_hex(stdout, "Public Key: ", apublic_key, crypto_publickeybytes);
