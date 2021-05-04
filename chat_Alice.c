@@ -45,13 +45,19 @@ ciphertext = (seq+1, IV, c=Enc(IV, key, m), Tag(seq+1, key, c)) = 32 + 16 + 256 
 
 int main(){
     char                fn_req[32], fn_rsp[32];
-    unsigned char       seed[48];
+    unsigned char       entropy_input[48], seed[48];
     unsigned char       cipher[crypto_ciphertextbytes], sshared_key[crypto_bytes];
     unsigned char       apublic_key[crypto_publickeybytes], aprivate_key[crypto_secretkeybytes];
     int                 ret_val;
     
 
-    randombytes_init(seed, NULL, 256);
+    randombytes_init(entropy_input, NULL, 256);
+    time_t t;
+    srand((unsigned) time(&t));
+    int rounds = rand() % 100;
+    for(int i = 0; i < rounds; ++i){
+        randombytes(seed, 48);
+    }
     
     #ifdef OPEN_LOG
     FILE* measure_fd = fopen("./log/measure_stats", "a");
@@ -69,10 +75,16 @@ int main(){
 
     struct timeval tv_start, tv_end;
     gettimeofday(&tv_start,NULL);
+    #endif
+    
+    randombytes_init(seed, NULL, 256);
+
     if ( (ret_val = crypto_kem_keypair(apublic_key, aprivate_key)) != 0) {
         printf("crypto_kem_keypair returned <%d>\n", ret_val);
         exit(EXIT_FAILURE);
     }
+    
+    #ifdef OPEN_LOG
     gettimeofday(&tv_end,NULL);
     fprintf(measure_fd, "Generate key pair takes %f seconds\n\n", tv_to_seconds(&tv_end) - tv_to_seconds(&tv_start) );
 
