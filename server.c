@@ -199,7 +199,7 @@ void key_exchange(int clientfd, unsigned char* cipher, unsigned char* sshared_ke
     }
 
     puts("");
-    printf("Key exchange is finished, you can now chat with Bob\n");
+    printf("Key exchange is finished, you can now chat with Bob (max message length: 238)\n");
     puts("");
 
 }

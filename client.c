@@ -178,7 +178,7 @@ void key_exchange(int serverfd, unsigned char* sshared_key, unsigned char* ciphe
     print_hex(stdout, "Symmetric Key: ", sshared_key, crypto_bytes);
 
     puts("");
-    printf("Key exchange is finished, you can now chat with Alice\n");
+    printf("Key exchange is finished, you can now chat with Alice (max message length: 238)\n");
     puts("");
 
 }
