@@ -94,10 +94,10 @@ int main(){
     #endif
     
     
-    print_hex(stdout, "Public Key: ", apublic_key, crypto_publickeybytes);
-    puts("");
-    print_hex(stdout, "Private Key: ", aprivate_key, crypto_secretkeybytes);
-    puts("");
+//    print_hex(stdout, "Public Key: ", apublic_key, crypto_publickeybytes);
+//    puts("");
+//    print_hex(stdout, "Private Key: ", aprivate_key, crypto_secretkeybytes);
+//    puts("");
     
     establish_connection(cipher, sshared_key);
     exit(EXIT_SUCCESS); 
