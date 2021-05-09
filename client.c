@@ -30,7 +30,7 @@ void establish_connection(unsigned char* sshared_key, unsigned char* cipher, uns
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_family = AF_UNSPEC;//check when this is valid
+    hints.ai_family = AF_INET;//check when this is valid
                                 //IPv4 or IPv6
     hints.ai_flags = AI_NUMERICSERV;
                                 //Wildcard IP address; service name is numeric
