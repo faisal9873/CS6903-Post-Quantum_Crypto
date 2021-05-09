@@ -64,11 +64,14 @@ void connect_to_server(struct addrinfo * result, unsigned char* sshared_key, uns
 
         serverfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if(serverfd == -1){
+            perror("Could not create socket");
             continue;
         }
 
         if(connect(serverfd, rp->ai_addr, rp->ai_addrlen) != -1){
             break;
+        } else {
+            perror("Could not connect");
         }
 
         if( close(serverfd) == -1){
